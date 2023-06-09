@@ -1,6 +1,6 @@
+#include "../src/matrix.h"
 #include "CUnit/CUnit.h"
 #include "CUnit/Basic.h"
-#include "../src/matrix.h"
 #include <stdio.h>
 
 /* Test Suite setup and cleanup functions: */
@@ -259,15 +259,15 @@ void pow_test(void) {
   set(mat, 1, 0, 1);
   set(mat, 1, 1, 0);
   pow_matrix(result, mat, 3);
-  CU_ASSERT_EQUAL(get(result, 0, 0), 3);
-  CU_ASSERT_EQUAL(get(result, 0, 1), 2);
-  CU_ASSERT_EQUAL(get(result, 1, 0), 2);
-  CU_ASSERT_EQUAL(get(result, 1, 1), 1);
+  CU_ASSERT_EQUAL(get(result, 0, 0), 3.0);
+  CU_ASSERT_EQUAL(get(result, 0, 1), 2.0);
+  CU_ASSERT_EQUAL(get(result, 1, 0), 2.0);
+  CU_ASSERT_EQUAL(get(result, 1, 1), 1.0);
   pow_matrix(result, mat, 10);
-  CU_ASSERT_EQUAL(get(result, 0, 0), 89);
-  CU_ASSERT_EQUAL(get(result, 0, 1), 55);
-  CU_ASSERT_EQUAL(get(result, 1, 0), 55);
-  CU_ASSERT_EQUAL(get(result, 1, 1), 34);
+  CU_ASSERT_EQUAL(get(result, 0, 0), 89.0);
+  CU_ASSERT_EQUAL(get(result, 0, 1), 55.0);
+  CU_ASSERT_EQUAL(get(result, 1, 0), 55.0);
+  CU_ASSERT_EQUAL(get(result, 1, 1), 34.0);
   deallocate_matrix(result);
   deallocate_matrix(mat);
 }

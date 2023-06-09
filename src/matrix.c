@@ -49,6 +49,7 @@ void rand_matrix(matrix *result, unsigned int seed, double low, double high) {
  */
 double get(matrix *mat, int row, int col) {
     // Task 1.1 TODO
+    return mat->data[row * mat->cols + col];
 }
 
 /*
@@ -57,6 +58,21 @@ double get(matrix *mat, int row, int col) {
  */
 void set(matrix *mat, int row, int col, double val) {
     // Task 1.1 TODO
+    mat->data[row * mat->cols + col] = val;
+}
+
+/**
+ * for debug
+*/
+void dump_matrix(matrix *mat) {
+    int rows = mat->rows;
+    int cols = mat->cols;
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            printf("%f  ", get(mat, i, j));
+        }
+        printf("\n");
+    }
 }
 
 /*
@@ -72,13 +88,27 @@ int allocate_matrix(matrix **mat, int rows, int cols) {
     // Task 1.2 TODO
     // HINTS: Follow these steps.
     // 1. Check if the dimensions are valid. Return -1 if either dimension is not positive.
+    if (rows <= 0 || cols <= 0) return -1;
     // 2. Allocate space for the new matrix struct. Return -2 if allocating memory failed.
+    matrix *ret = (matrix*)malloc(sizeof(matrix));
+    if (ret == NULL) return -2;
     // 3. Allocate space for the matrix data, initializing all entries to be 0. Return -2 if allocating memory failed.
+    int len = rows * cols;
+    double *data = (double*)malloc((unsigned)len * sizeof(double));
+    if (data == NULL) return -2;
+    memset(data, 0, (unsigned)len * sizeof(double));
     // 4. Set the number of rows and columns in the matrix struct according to the arguments provided.
+    ret->cols = cols;
+    ret->rows = rows;
     // 5. Set the `parent` field to NULL, since this matrix was not created from a slice.
+    ret->parent = NULL;
     // 6. Set the `ref_cnt` field to 1.
+    ret->ref_cnt = 1;
     // 7. Store the address of the allocated matrix struct at the location `mat` is pointing at.
+    ret->data = data;
+    *mat = ret;
     // 8. Return 0 upon success.
+    return 0;
 }
 
 /*
@@ -90,8 +120,19 @@ void deallocate_matrix(matrix *mat) {
     // Task 1.3 TODO
     // HINTS: Follow these steps.
     // 1. If the matrix pointer `mat` is NULL, return.
+    if (mat == NULL) return;
     // 2. If `mat` has no parent: decrement its `ref_cnt` field by 1. If the `ref_cnt` field becomes 0, then free `mat` and its `data` field.
     // 3. Otherwise, recursively call `deallocate_matrix` on `mat`'s parent, then free `mat`.
+    if (!mat->parent) {
+        mat->ref_cnt--;
+        if (mat->ref_cnt == 0) {
+            free(mat->data);
+            free(mat);
+        }
+    } else {
+        deallocate_matrix(mat->parent);
+        free(mat);
+    }
 }
 
 /*
@@ -110,13 +151,23 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
     // Task 1.4 TODO
     // HINTS: Follow these steps.
     // 1. Check if the dimensions are valid. Return -1 if either dimension is not positive.
+    if (rows <= 0 || cols <= 0) return -1;
     // 2. Allocate space for the new matrix struct. Return -2 if allocating memory failed.
+    matrix *ret = (matrix*)malloc(sizeof(matrix));
+    if (ret == NULL) return -2;
     // 3. Set the `data` field of the new struct to be the `data` field of the `from` struct plus `offset`.
+    ret->data = from->data + offset;
     // 4. Set the number of rows and columns in the new struct according to the arguments provided.
+    ret->cols = cols;
+    ret->rows = rows;
     // 5. Set the `parent` field of the new struct to the `from` struct pointer.
+    ret->parent = from;
     // 6. Increment the `ref_cnt` field of the `from` struct by 1.
+    from->ref_cnt += 1;
     // 7. Store the address of the allocated matrix struct at the location `mat` is pointing at.
+    *mat = ret;
     // 8. Return 0 upon success.
+    return 0;
 }
 
 /*
@@ -124,6 +175,9 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
  */
 void fill_matrix(matrix *mat, double val) {
     // Task 1.5 TODO
+    for (int i = 0; i < mat->cols * mat->rows; i++) {
+        mat->data[i] = val;
+    }
 }
 
 /*
@@ -133,6 +187,10 @@ void fill_matrix(matrix *mat, double val) {
  */
 int abs_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
+    for (int i = 0; i < mat->cols * mat->rows; i++) {
+        result->data[i] = fabs(mat->data[i]);
+    }
+    return 0;
 }
 
 /*
@@ -143,6 +201,10 @@ int abs_matrix(matrix *result, matrix *mat) {
  */
 int neg_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
+    for (int i = 0; i < mat->cols * mat->rows; i++) {
+        mat->data[i] = -mat->data[i];
+    }
+    return 0;
 }
 
 /*
@@ -153,6 +215,10 @@ int neg_matrix(matrix *result, matrix *mat) {
  */
 int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
+    for (int i = 0; i < result->cols * result->rows; i++) {
+        result->data[i] = mat1->data[i] + mat2->data[i];
+    }
+    return 0;
 }
 
 /*
@@ -164,6 +230,10 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
+    for (int i = 0; i < result->cols * result->rows; i++) {
+        result->data[i] = mat1->data[i] - mat2->data[i];
+    }
+    return 0;
 }
 
 /*
@@ -175,6 +245,19 @@ int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.6 TODO
+    int rows = result->rows;
+    int cols = result->cols;
+    int len = rows * cols;
+    memset(result->data, 0, (unsigned)len * sizeof(result->data[0]));
+    for (int i = 0; i < result->rows; i++) {
+        for (int j = 0; j < result->cols; j++) {
+            for (int k = 0; k < mat1->cols; k++) {
+                result->data[i * cols + j] +=
+                    mat1->data[i * mat1->cols + k] * mat2->data[k * cols + j];
+            }
+        }
+    }
+    return 0;
 }
 
 /*
@@ -186,4 +269,33 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int pow_matrix(matrix *result, matrix *mat, int pow) {
     // Task 1.6 TODO
+    int rows = result->rows;
+    int cols = result->cols;
+    matrix *mid, *tmp, *hold = result;
+    int r = allocate_matrix(&mid, rows, cols);
+    if (r < 0) {
+        return r;
+    }
+
+    fill_matrix(mid, 0.0);
+    for (int i = 0; i < rows; i++) {
+        mid->data[i * cols + i] = 1.0;
+    }
+
+    for (int i = 0; i < pow; i++) {
+        mul_matrix(result, mid, mat);
+        tmp = result;
+        result = mid;
+        mid = tmp;
+    }
+
+    if (result == hold) {
+        int len = cols * rows;
+        memcpy(result->data, mid->data, (unsigned)len * sizeof(result->data[0]));
+    } else {
+        mid = result;
+    }
+
+    deallocate_matrix(mid);
+    return 0;
 }
