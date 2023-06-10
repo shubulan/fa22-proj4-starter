@@ -175,7 +175,13 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
  */
 void fill_matrix(matrix *mat, double val) {
     // Task 1.5 TODO
-    for (int i = 0; i < mat->cols * mat->rows; i++) {
+    int len = mat->cols * mat->rows;
+    __m256d cst =  _mm256_set1_pd(val);
+    for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
+        _mm256_storeu_pd(&(mat->data[i]), cst);
+    }
+
+    for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
         mat->data[i] = val;
     }
 }
@@ -187,7 +193,15 @@ void fill_matrix(matrix *mat, double val) {
  */
 int abs_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
-    for (int i = 0; i < mat->cols * mat->rows; i++) {
+    int len = mat->cols * mat->rows;
+    __m256d cst =  _mm256_set1_pd(0.0);
+    for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
+        __m256d blk = _mm256_loadu_pd(&(mat->data[i]));
+        __m256d tmp = _mm256_sub_pd(cst, blk);
+        tmp = _mm256_max_pd(blk, tmp);
+        _mm256_storeu_pd(&(result->data[i]), tmp);
+    }
+    for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
         result->data[i] = fabs(mat->data[i]);
     }
     return 0;
@@ -201,8 +215,15 @@ int abs_matrix(matrix *result, matrix *mat) {
  */
 int neg_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
-    for (int i = 0; i < mat->cols * mat->rows; i++) {
-        mat->data[i] = -mat->data[i];
+    int len = mat->cols * mat->rows;
+    __m256d cst =  _mm256_set1_pd(0.0);
+    for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
+        __m256d blk = _mm256_loadu_pd(&(mat->data[i]));
+        __m256d tmp = _mm256_sub_pd(cst, blk);
+        _mm256_storeu_pd(&(result->data[i]), tmp);
+    }
+    for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
+        result->data[i] = -mat->data[i];
     }
     return 0;
 }
@@ -215,7 +236,14 @@ int neg_matrix(matrix *result, matrix *mat) {
  */
 int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
-    for (int i = 0; i < result->cols * result->rows; i++) {
+    int len = result->cols * result->rows;
+    for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
+        __m256d blk1 = _mm256_loadu_pd(&(mat1->data[i]));
+        __m256d blk2 = _mm256_loadu_pd(&(mat2->data[i]));
+        __m256d res = _mm256_add_pd(blk1, blk2);
+        _mm256_storeu_pd(&(result->data[i]), res);
+    }
+    for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
         result->data[i] = mat1->data[i] + mat2->data[i];
     }
     return 0;
@@ -230,7 +258,14 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
-    for (int i = 0; i < result->cols * result->rows; i++) {
+    int len = result->cols * result->rows;
+    for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
+        __m256d blk1 = _mm256_loadu_pd(&(mat1->data[i]));
+        __m256d blk2 = _mm256_loadu_pd(&(mat2->data[i]));
+        __m256d res = _mm256_sub_pd(blk1, blk2);
+        _mm256_storeu_pd(&(result->data[i]), res);
+    }
+    for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
         result->data[i] = mat1->data[i] - mat2->data[i];
     }
     return 0;
@@ -250,13 +285,29 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     int len = rows * cols;
     memset(result->data, 0, (unsigned)len * sizeof(result->data[0]));
     for (int i = 0; i < result->rows; i++) {
-        for (int j = 0; j < result->cols; j++) {
-            for (int k = 0; k < mat1->cols; k++) {
+        for (int k = 0; k < mat1->cols; k++) {
+            __m256d blk1 = _mm256_set1_pd (mat1->data[i * mat1->cols + k]);
+            for (int j = 0; j < result->cols / SIMD_SIZE * SIMD_SIZE; j += SIMD_SIZE) {
+                __m256d ori = _mm256_loadu_pd(&(result->data[i * cols + j]));
+                __m256d blk2 = _mm256_loadu_pd(&(mat2->data[k * cols + j]));
+                __m256d mres = _mm256_mul_pd(blk1, blk2);
+                __m256d res = _mm256_add_pd(ori, mres);
+                _mm256_storeu_pd(&(result->data[i * cols + j]), res);
+            }
+            
+            for (int j = result->cols / SIMD_SIZE * SIMD_SIZE; j < result->cols; j++) {
                 result->data[i * cols + j] +=
                     mat1->data[i * mat1->cols + k] * mat2->data[k * cols + j];
             }
+
         }
     }
+    // printf("=====\n");
+    // dump_matrix(mat1);
+    // printf("---\n");
+    // dump_matrix(mat2);
+    // printf("---\n");
+    // dump_matrix(result);
     return 0;
 }
 

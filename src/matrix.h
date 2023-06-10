@@ -1,5 +1,6 @@
 #include <Python.h>
 
+#define SIMD_SIZE 4
 typedef struct matrix {
     int rows; // number of rows
     int cols; // number of columns
