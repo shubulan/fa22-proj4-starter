@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -g -Wall -Wno-unused-function -Wconversion -std=c99 -fopenmp -mavx -mfma -pthread
 LDFLAGS = -fopenmp
 CUNIT = -lcunit
-PYTHON = -I/home/gyl/anaconda3/include/python3.10 -L/home/gyl/anaconda3/lib -lpython3.10 -Wl,-rpath=/home/gyl/anaconda3/lib
+PYTHON = -I/home/gyl/anaconda3/envs/numc/include/python3.6m -L/home/gyl/anaconda3/envs/numc/lib -lpython3.6m -Wl,-rpath=/home/gyl/anaconda3/envs/numc/lib
 
 install:
 	if [ ! -f files.txt ]; then touch files.txt; fi
