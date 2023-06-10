@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -g -Wall -Wno-unused-function -Wconversion -std=c99 -fopenmp -mavx -mfma -pthread
-LDFLAGS = -fopenmp
+CFLAGS = -g -Wall -Wno-unused-function -Wconversion -std=c99 -fopenmp -mavx -mfma -pthread #-fsanitize=address -fno-omit-frame-pointer
+LDFLAGS = -fopenmp #-fsanitize=address -fno-omit-frame-pointer
 CUNIT = -lcunit
 PYTHON = -I/home/gyl/anaconda3/envs/numc/include/python3.6m -L/home/gyl/anaconda3/envs/numc/lib -lpython3.6m -Wl,-rpath=/home/gyl/anaconda3/envs/numc/lib
 

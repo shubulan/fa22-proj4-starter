@@ -177,6 +177,7 @@ void fill_matrix(matrix *mat, double val) {
     // Task 1.5 TODO
     int len = mat->cols * mat->rows;
     __m256d cst =  _mm256_set1_pd(val);
+    #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         _mm256_storeu_pd(&(mat->data[i]), cst);
     }
@@ -195,12 +196,14 @@ int abs_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
     int len = mat->cols * mat->rows;
     __m256d cst =  _mm256_set1_pd(0.0);
+    #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         __m256d blk = _mm256_loadu_pd(&(mat->data[i]));
         __m256d tmp = _mm256_sub_pd(cst, blk);
         tmp = _mm256_max_pd(blk, tmp);
         _mm256_storeu_pd(&(result->data[i]), tmp);
     }
+
     for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
         result->data[i] = fabs(mat->data[i]);
     }
@@ -217,6 +220,7 @@ int neg_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
     int len = mat->cols * mat->rows;
     __m256d cst =  _mm256_set1_pd(0.0);
+    #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         __m256d blk = _mm256_loadu_pd(&(mat->data[i]));
         __m256d tmp = _mm256_sub_pd(cst, blk);
@@ -237,6 +241,7 @@ int neg_matrix(matrix *result, matrix *mat) {
 int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
     int len = result->cols * result->rows;
+    #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         __m256d blk1 = _mm256_loadu_pd(&(mat1->data[i]));
         __m256d blk2 = _mm256_loadu_pd(&(mat2->data[i]));
@@ -259,6 +264,7 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
 int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
     int len = result->cols * result->rows;
+    #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         __m256d blk1 = _mm256_loadu_pd(&(mat1->data[i]));
         __m256d blk2 = _mm256_loadu_pd(&(mat2->data[i]));
@@ -287,6 +293,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     for (int i = 0; i < result->rows; i++) {
         for (int k = 0; k < mat1->cols; k++) {
             __m256d blk1 = _mm256_set1_pd (mat1->data[i * mat1->cols + k]);
+            #pragma omp parallel for
             for (int j = 0; j < result->cols / SIMD_SIZE * SIMD_SIZE; j += SIMD_SIZE) {
                 __m256d ori = _mm256_loadu_pd(&(result->data[i * cols + j]));
                 __m256d blk2 = _mm256_loadu_pd(&(mat2->data[k * cols + j]));
@@ -322,31 +329,52 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
     // Task 1.6 TODO
     int rows = result->rows;
     int cols = result->cols;
-    matrix *mid, *tmp, *hold = result;
-    int r = allocate_matrix(&mid, rows, cols);
-    if (r < 0) {
-        return r;
+    int m_ret;
+    matrix *mid, *tmp, *hold = result, *base, *base_m;
+    m_ret = allocate_matrix(&mid, rows, cols);
+    if (m_ret < 0) {
+        return m_ret;
     }
 
-    fill_matrix(mid, 0.0);
+    m_ret = allocate_matrix(&base, rows, cols);
+    if (m_ret < 0) {
+        deallocate_matrix(mid);
+        return m_ret;
+    }
+
+    m_ret = allocate_matrix(&base_m, rows, cols);
+    if (m_ret < 0) {
+        deallocate_matrix(mid);
+        deallocate_matrix(base);
+        return m_ret;
+    }
+
+    fill_matrix(result, 0.0);
     for (int i = 0; i < rows; i++) {
-        mid->data[i * cols + i] = 1.0;
+        set(result, i, i, 1.0);
+    }
+    add_matrix(base, base, mat);
+    while (pow) {
+        if (pow & 1) {
+            tmp = result;
+            result = mid;
+            mid = tmp;
+            mul_matrix(result, mid, base);
+        }
+        mul_matrix(base_m, base, base);
+        tmp = base;
+        base = base_m;
+        base_m = tmp;
+        pow >>= 1;
     }
 
-    for (int i = 0; i < pow; i++) {
-        mul_matrix(result, mid, mat);
-        tmp = result;
-        result = mid;
-        mid = tmp;
-    }
-
-    if (result == hold) {
+    if (result != hold) {
         int len = cols * rows;
-        memcpy(result->data, mid->data, (unsigned)len * sizeof(result->data[0]));
-    } else {
+        memcpy(hold->data, result->data, (unsigned)len * sizeof(hold->data[0]));
         mid = result;
     }
-
     deallocate_matrix(mid);
+    deallocate_matrix(base);
+    deallocate_matrix(base_m);
     return 0;
 }
