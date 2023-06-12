@@ -46,6 +46,7 @@ Returns whether the given dumbpy matrix dp_mat is equal to the numc matrix nc_ma
 This function allows a reasonable margin of( floating point errors
 """
 def cmp_dp_nc_matrix(dp_mat: dp.Matrix, nc_mat: nc.Matrix):
+    # print("===========", type(dp_mat))
     return rand_md5(dp_mat) == rand_md5(nc_mat)
 
 """
@@ -67,6 +68,8 @@ def compute(dp_mat_lst: List[Union[dp.Matrix, int]],
 
         dp_start = time.perf_counter()
         dp_result = f(dp_mat_lst[0])
+        # print("++++", type(dp_mat_lst[0]), dp_mat_lst[0])
+        # print("+++ ", op, type(dp_result), dp_result)
         dp_end = time.perf_counter()
     else:
         assert(len(dp_mat_lst) > 1)
