@@ -6,10 +6,10 @@ def main():
     LDFLAGS = ['-fopenmp']
     setup(name="dumbpy",
           version="0.0.1",
-          description="numc matrix operations with out optimization",
+          description="dumbpy matrix operations with out optimization",
           ext_modules=[
             Extension("dumbpy",
-                      sources=["src/numc.c", "src/matrix.c"],
+                      sources=["src/dumbpy.c", "src/matrix.c"],
                       extra_compile_args=CFLAGS,
                       extra_link_args=LDFLAGS,
                       language='c')

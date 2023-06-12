@@ -1,7 +1,7 @@
-#include "numc.h"
+#include "dumbpy.h"
 #include <structmember.h>
 
-// numc.c mainly handles possible errors and unpacking the variables to then later use the functions
+// dumbpy.c mainly handles possible errors and unpacking the variables to then later use the functions
 // from matrix.c. To get a better understanding of the Python-C interface function calls that are used
 // in the code below, have a look at the spec.
 
