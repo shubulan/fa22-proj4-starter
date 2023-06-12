@@ -7,7 +7,7 @@ PYTHON = -I/home/gyl/anaconda3/envs/numc/include/python3.6m -L/home/gyl/anaconda
 install:
 	if [ ! -f files.txt ]; then touch files.txt; fi
 	rm -rf build
-	xargs rm -rf < files.txt
+	#xargs rm -rf < files.txt
 	python3 setup.py install --record files.txt
 
 uninstall:

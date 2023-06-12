@@ -61,13 +61,16 @@ def compute(dp_mat_lst: List[Union[dp.Matrix, int]],
     if op == "neg" or op == "abs":
         assert(len(dp_mat_lst) == 1)
         assert(len(nc_mat_lst) == 1)
-        nc_start = time.perf_counter()
-        nc_result = f(nc_mat_lst[0])
-        nc_end = time.perf_counter()
+        for _ in range(2):
+            dp_start = time.perf_counter()
+            dp_result = f(dp_mat_lst[0])
+            dp_end = time.perf_counter()
 
-        dp_start = time.perf_counter()
-        dp_result = f(dp_mat_lst[0])
-        dp_end = time.perf_counter()
+        for _ in range(2):
+            nc_start = time.perf_counter()
+            nc_result = f(nc_mat_lst[0])
+            nc_end = time.perf_counter()
+
     else:
         assert(len(dp_mat_lst) > 1)
         assert(len(nc_mat_lst) > 1)
@@ -83,14 +86,18 @@ def compute(dp_mat_lst: List[Union[dp.Matrix, int]],
             dp_result = f(dp_result, mat)
         dp_end = time.perf_counter()
     # Check for correctness
+    # if op == "pow":
+    #     print(op)
+    #     print(nc_mat_lst[0], dp_result)
+    #     print(dp_mat_lst[0], nc_result)
     is_correct = cmp_dp_nc_matrix(nc_result, dp_result)
-    return is_correct, (dp_end - dp_start) / (nc_end - nc_start)
+    return is_correct, {"op": op, "val": (dp_end - dp_start) / (nc_end - nc_start)}
 
 """
 Print speedup
 """
 def print_speedup(speed_up):
-    print("Speed up is:", speed_up)
+    print("Speed up is:", speed_up["val"])
 
 """
 Generate a md5 hash by sampling random elements in nc_mat

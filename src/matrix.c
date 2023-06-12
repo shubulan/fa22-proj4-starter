@@ -176,10 +176,10 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
 void fill_matrix(matrix *mat, double val) {
     // Task 1.5 TODO
     int len = mat->cols * mat->rows;
-    __m256d cst =  _mm256_set1_pd(val);
+    __m256d zeros =  _mm256_set1_pd(val);
     #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
-        _mm256_storeu_pd(&(mat->data[i]), cst);
+        _mm256_storeu_pd(&(mat->data[i]), zeros);
     }
 
     for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
@@ -195,11 +195,11 @@ void fill_matrix(matrix *mat, double val) {
 int abs_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
     int len = mat->cols * mat->rows;
-    __m256d cst =  _mm256_set1_pd(0.0);
+    __m256d zeros =  _mm256_set1_pd(0.0);
     #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         __m256d blk = _mm256_loadu_pd(&(mat->data[i]));
-        __m256d tmp = _mm256_sub_pd(cst, blk);
+        __m256d tmp = _mm256_sub_pd(zeros, blk);
         tmp = _mm256_max_pd(blk, tmp);
         _mm256_storeu_pd(&(result->data[i]), tmp);
     }
@@ -219,16 +219,16 @@ int abs_matrix(matrix *result, matrix *mat) {
 int neg_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
     int len = mat->cols * mat->rows;
-    __m256d cst =  _mm256_set1_pd(0.0);
+    __m256d zeros =  _mm256_set1_pd(0.0);
     #pragma omp parallel for
     for (int i = 0; i < len / SIMD_SIZE * SIMD_SIZE ; i += SIMD_SIZE) {
         __m256d blk = _mm256_loadu_pd(&(mat->data[i]));
-        __m256d tmp = _mm256_sub_pd(cst, blk);
-        _mm256_storeu_pd(&(result->data[i]), tmp);
+        _mm256_storeu_pd(&(result->data[i]), _mm256_sub_pd(zeros, blk));
     }
     for (int i = len / SIMD_SIZE * SIMD_SIZE; i < len; i++) {
         result->data[i] = -mat->data[i];
     }
+
     return 0;
 }
 
@@ -293,7 +293,6 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     for (int i = 0; i < result->rows; i++) {
         for (int k = 0; k < mat1->cols; k++) {
             __m256d blk1 = _mm256_set1_pd (mat1->data[i * mat1->cols + k]);
-            #pragma omp parallel for
             for (int j = 0; j < result->cols / SIMD_SIZE * SIMD_SIZE; j += SIMD_SIZE) {
                 __m256d ori = _mm256_loadu_pd(&(result->data[i * cols + j]));
                 __m256d blk2 = _mm256_loadu_pd(&(mat2->data[k * cols + j]));
