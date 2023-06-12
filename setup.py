@@ -4,11 +4,11 @@ import sysconfig
 def main():
     CFLAGS = ['-g', '-Wall', '-Wno-unused-function', '-Wconversion', '-std=c99', '-fopenmp', '-mavx', '-mfma', '-pthread', '-O3']
     LDFLAGS = ['-fopenmp']
-    setup(name="numc",
+    setup(name="dumbpy",
           version="0.0.1",
-          description="numc matrix operations",
+          description="numc matrix operations with out optimization",
           ext_modules=[
-            Extension("numc",
+            Extension("dumbpy",
                       sources=["src/numc.c", "src/matrix.c"],
                       extra_compile_args=CFLAGS,
                       extra_link_args=LDFLAGS,
